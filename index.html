@@ -69,5 +69,17 @@
 				<div class="dialog-footer"><span class="form-note"><i data-lucide="shield-check"></i> Guest details stay private</span><button class="button button-primary" type="submit"><i data-lucide="check"></i> Create reservation</button></div>
 			</form>
 		</dialog>
+		<dialog class="booking-dialog room-dialog" id="room-dialog" aria-labelledby="room-title">
+			<form id="room-form">
+				<div class="dialog-header"><div><span class="eyebrow">ROOM SETUP</span><h2 id="room-title">Add a room</h2></div><button class="icon-button" type="button" data-close-room-dialog aria-label="Close dialog"><i data-lucide="x"></i></button></div>
+				<div class="form-grid">
+					<label class="field">Room number<input name="number" required inputmode="numeric" placeholder="e.g. 101"></label>
+					<label class="field">Room type<input name="type" required placeholder="e.g. Garden queen"></label>
+					<label class="field">Floor<select name="floor"><option>1st floor</option><option>2nd floor</option><option>3rd floor</option><option>4th floor</option><option>5th floor</option></select></label>
+					<label class="field">Nightly rate<input name="rate" type="number" min="1" step="1" required placeholder="189"></label>
+				</div>
+				<div class="dialog-footer"><span class="form-note"><i data-lucide="sparkles"></i> Ready for its first guest</span><button class="button button-primary" type="submit"><i data-lucide="plus"></i> Add room</button></div>
+			</form>
+		</dialog>
 	</body>
 </html>

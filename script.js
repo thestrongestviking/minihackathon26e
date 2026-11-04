@@ -15,32 +15,8 @@
 		if (!date) return '—';
 		return new Intl.DateTimeFormat('en-US', options).format(new Date(`${date}T12:00:00`));
 	};
-	const roomSeed = [
-		{ number: '101', type: 'Garden queen', floor: '1st floor', rate: 189, housekeeping: 'clean' },
-		{ number: '102', type: 'Garden queen', floor: '1st floor', rate: 189, housekeeping: 'clean' },
-		{ number: '103', type: 'Garden queen', floor: '1st floor', rate: 189, housekeeping: 'dirty' },
-		{ number: '104', type: 'Garden queen', floor: '1st floor', rate: 189, housekeeping: 'inspected' },
-		{ number: '201', type: 'City king', floor: '2nd floor', rate: 229, housekeeping: 'clean' },
-		{ number: '202', type: 'City king', floor: '2nd floor', rate: 229, housekeeping: 'clean' },
-		{ number: '203', type: 'City king', floor: '2nd floor', rate: 229, housekeeping: 'dirty' },
-		{ number: '204', type: 'City king', floor: '2nd floor', rate: 229, housekeeping: 'clean' },
-		{ number: '205', type: 'Corner suite', floor: '2nd floor', rate: 329, housekeeping: 'inspected' },
-		{ number: '301', type: 'City king', floor: '3rd floor', rate: 249, housekeeping: 'clean' },
-		{ number: '302', type: 'Corner suite', floor: '3rd floor', rate: 349, housekeeping: 'clean' },
-		{ number: '303', type: 'Corner suite', floor: '3rd floor', rate: 349, housekeeping: 'dirty' },
-		{ number: '304', type: 'Penthouse', floor: '3rd floor', rate: 489, housekeeping: 'inspected' },
-		{ number: '305', type: 'Penthouse', floor: '3rd floor', rate: 489, housekeeping: 'clean' }
-	];
-	const sampleBookings = [
-		{ id: 'MH-2841', guest: 'Alice Chen', email: 'alice.chen@example.com', phone: '+1 (503) 555-0182', room: '204', checkin: addDays(0), checkout: addDays(2), guests: 2, status: 'checked-in', notes: '' },
-		{ id: 'MH-2842', guest: 'Mateo Rivera', email: 'mateo.rivera@example.com', phone: '+1 (415) 555-0134', room: '301', checkin: addDays(0), checkout: addDays(3), guests: 2, status: 'confirmed', notes: 'Late arrival' },
-		{ id: 'MH-2843', guest: 'Samira Patel', email: 'samira.patel@example.com', phone: '+1 (206) 555-0190', room: '102', checkin: addDays(-1), checkout: addDays(0), guests: 1, status: 'checked-in', notes: '' },
-		{ id: 'MH-2844', guest: 'Theo Williams', email: 'theo.williams@example.com', phone: '+1 (971) 555-0108', room: '205', checkin: addDays(1), checkout: addDays(4), guests: 2, status: 'confirmed', notes: 'Anniversary' },
-		{ id: 'MH-2845', guest: 'Ava Johnson', email: 'ava.johnson@example.com', phone: '+1 (312) 555-0173', room: '303', checkin: addDays(2), checkout: addDays(5), guests: 3, status: 'confirmed', notes: '' },
-		{ id: 'MH-2846', guest: 'Luca Brooks', email: 'luca.brooks@example.com', phone: '+1 (503) 555-0127', room: '103', checkin: addDays(0), checkout: addDays(1), guests: 1, status: 'checked-in', notes: '' },
-		{ id: 'MH-2847', guest: 'Noah Kim', email: 'noah.kim@example.com', phone: '+1 (425) 555-0161', room: '201', checkin: addDays(-3), checkout: addDays(-1), guests: 2, status: 'checked-out', notes: '' },
-		{ id: 'MH-2848', guest: 'Priya Shah', email: 'priya.shah@example.com', phone: '+1 (510) 555-0149', room: '302', checkin: addDays(4), checkout: addDays(6), guests: 2, status: 'confirmed', notes: 'Feather-free room' }
-	];
+	const roomSeed = [];
+	const sampleBookings = [];
 	const readStore = (key, fallback) => {
 		try {
 			const saved = localStorage.getItem(key);
@@ -50,8 +26,8 @@
 		}
 	};
 	const state = {
-		rooms: readStore('morrow-rooms', roomSeed),
-		bookings: readStore('morrow-bookings', sampleBookings),
+		rooms: readStore('morrow-rooms-v2', roomSeed),
+		bookings: readStore('morrow-bookings-v2', sampleBookings),
 		view: 'overview',
 		search: '',
 		reservationFilter: 'all'
@@ -59,10 +35,12 @@
 	const page = document.querySelector('#page-content');
 	const dialog = document.querySelector('#booking-dialog');
 	const bookingForm = document.querySelector('#booking-form');
+	const roomDialog = document.querySelector('#room-dialog');
+	const roomForm = document.querySelector('#room-form');
 	const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 	const saveState = () => {
-		localStorage.setItem('morrow-rooms', JSON.stringify(state.rooms));
-		localStorage.setItem('morrow-bookings', JSON.stringify(state.bookings));
+		localStorage.setItem('morrow-rooms-v2', JSON.stringify(state.rooms));
+		localStorage.setItem('morrow-bookings-v2', JSON.stringify(state.bookings));
 	};
 	const activeBookings = () => state.bookings.filter((booking) => ['confirmed', 'checked-in'].includes(booking.status));
 	const bookingForRoomToday = (roomNumber) => activeBookings().find((booking) => booking.room === roomNumber && booking.checkin <= isoDate(today) && booking.checkout > isoDate(today));
@@ -128,9 +106,11 @@
 		const arrivals = todayBookings.filter((booking) => booking.status === 'confirmed');
 		const occupied = state.rooms.filter((room) => bookingForRoomToday(room.number)?.status === 'checked-in').length;
 		const departures = state.bookings.filter((booking) => booking.checkout === isoDate(today) && booking.status === 'checked-in').length;
-		const occupancy = Math.round((occupied / state.rooms.length) * 100);
+		const occupancy = state.rooms.length ? Math.round((occupied / state.rooms.length) * 100) : 0;
 		const revenue = state.bookings.filter((booking) => booking.status === 'checked-in' || (booking.status === 'confirmed' && booking.checkin === isoDate(today))).reduce((sum, booking) => sum + (state.rooms.find((room) => room.number === booking.room)?.rate || 0), 0);
 		const nextArrivals = arrivals.filter((booking) => matchesSearch(booking.id, booking.guest, booking.email, booking.room)).slice(0, 5);
+		if (!state.rooms.length) return `${pageHeading('YOUR LITTLE HOTEL EMPIRE', 'Let’s get this place going!', 'Start with a room, then welcome your first guest.', `<button class="button button-primary" data-action="add-room">${icon('plus')} Add your first room</button>`)}
+			<section class="empty-welcome"><div class="welcome-art"><span class="welcome-spark spark-one">${icon('sparkles')}</span><span class="welcome-building">${icon('hotel')}</span><span class="welcome-spark spark-two">${icon('sun')}</span></div><div class="welcome-copy"><span class="welcome-tag">${icon('party-popper')} FRESH START</span><h2>Your front desk is ready.</h2><p>Add your rooms to open the doors. Once they’re in, you can book stays, check guests in and out, and keep housekeeping on track.</p><div class="welcome-actions"><button class="button button-primary" data-action="add-room">${icon('plus')} Add a room</button><button class="button button-outline" data-action="new-booking">${icon('calendar-plus')} Make a reservation</button></div></div><div class="welcome-steps"><span><b>01</b> Add rooms</span><i></i><span><b>02</b> Book a stay</span><i></i><span><b>03</b> Check in!</span></div></section>`;
 		return `${pageHeading(formatDate(isoDate(today), { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase(), 'Good morning, Jordan', 'Here is what is happening at your hotel today.', button('New reservation', 'plus'))}
 			<div class="metric-grid">
 				<article class="metric-card"><div class="metric-top"><span>Occupancy</span><span class="metric-icon metric-icon-green">${icon('door-open')}</span></div><div class="metric-value">${occupancy}<small>%</small></div><div class="metric-foot"><span class="trend-up">${occupied} rooms occupied</span><span>of ${state.rooms.length} rooms</span></div><div class="metric-progress"><span style="width:${occupancy}%"></span></div></article>
@@ -153,15 +133,20 @@
 		if (state.reservationFilter !== 'all') bookings = bookings.filter((booking) => booking.status === state.reservationFilter);
 		bookings = bookings.sort((first, second) => first.checkin.localeCompare(second.checkin));
 		const filters = [['all', 'All stays'], ['confirmed', 'Confirmed'], ['checked-in', 'In house'], ['checked-out', 'Checked out']];
-		return `${pageHeading('FRONT DESK', 'Reservations', 'Manage stays, arrivals, and departures.', button('New reservation', 'plus'))}<section class="panel full-panel"><div class="list-toolbar"><div class="filter-tabs">${filters.map(([value, label]) => `<button class="filter-tab ${state.reservationFilter === value ? 'selected' : ''}" data-filter="${value}">${label}${value === 'all' ? `<span>${state.bookings.length}</span>` : ''}</button>`).join('')}</div><button class="button button-outline" data-action="export-bookings">${icon('download')} Export</button></div>${reservationTable(bookings)}</section>`;
+		const headingAction = state.rooms.length ? button('New reservation', 'plus') : `<button class="button button-primary" data-action="add-room">${icon('plus')} Add a room</button>`;
+		const content = state.bookings.length
+			? `<section class="panel full-panel"><div class="list-toolbar"><div class="filter-tabs">${filters.map(([value, label]) => `<button class="filter-tab ${state.reservationFilter === value ? 'selected' : ''}" data-filter="${value}">${label}${value === 'all' ? `<span>${state.bookings.length}</span>` : ''}</button>`).join('')}</div><button class="button button-outline" data-action="export-bookings">${icon('download')} Export</button></div>${reservationTable(bookings)}</section>`
+			: `<section class="panel empty-list"><span class="empty-icon empty-icon-coral">${icon('calendar-plus')}</span><h2>No stays on the books yet</h2><p>${state.rooms.length ? 'Your first guest is just a reservation away.' : 'Add a room first, then start taking reservations.'}</p><button class="button button-primary" data-action="${state.rooms.length ? 'new-booking' : 'add-room'}">${icon(state.rooms.length ? 'plus' : 'bed-double')} ${state.rooms.length ? 'Create first reservation' : 'Set up rooms'}</button></section>`;
+		return `${pageHeading('FRONT DESK', 'Reservations', 'Manage stays, arrivals, and departures.', headingAction)}${content}`;
 	};
 	const renderRooms = () => {
 		const available = state.rooms.filter((room) => roomState(room).key === 'available').length;
 		const occupied = state.rooms.filter((room) => roomState(room).key === 'occupied').length;
 		const needsAttention = state.rooms.filter((room) => ['dirty', 'cleaning'].includes(room.housekeeping)).length;
-		return `${pageHeading('PROPERTY', 'Room board', 'A live view of every room at Morrow House.')}
+		const roomContent = roomCards(state.rooms.filter((room) => matchesSearch(room.number, room.type, roomState(room).booking?.guest))) || `<div class="panel empty-list room-empty"><span class="empty-icon empty-icon-green">${icon('bed-double')}</span><h2>Your room board is blank</h2><p>Add your first room to begin tracking availability and arrivals.</p><button class="button button-primary" data-action="add-room">${icon('plus')} Add your first room</button></div>`;
+		return `${pageHeading('PROPERTY', 'Room board', 'A live view of every room at Morrow House.', `<button class="button button-primary" data-action="add-room">${icon('plus')} Add room</button>`)}
 			<div class="room-summary"><div><span class="summary-dot dot-green"></span><strong>${available}</strong> available</div><div><span class="summary-dot dot-blue"></span><strong>${occupied}</strong> occupied</div><div><span class="summary-dot dot-amber"></span><strong>${needsAttention}</strong> need attention</div></div>
-			<div class="floor-heading"><h2>All rooms</h2><span>${state.rooms.length} keys · 3 floors</span></div><div class="room-grid room-grid-full">${roomCards(state.rooms.filter((room) => matchesSearch(room.number, room.type, roomState(room).booking?.guest)))}</div>`;
+			<div class="floor-heading"><h2>All rooms</h2><span>${state.rooms.length} ${state.rooms.length === 1 ? 'key' : 'keys'}</span></div><div class="room-grid room-grid-full">${roomContent}</div>`;
 	};
 	const getGuests = () => {
 		const guests = new Map();
@@ -190,7 +175,7 @@
 		}).join('');
 		return `${pageHeading('ROOM OPERATIONS', 'Housekeeping', 'Keep every room guest-ready, one task at a time.')}
 			<div class="housekeeping-stats">${counts.map(([status, count]) => `<div><span class="housekeeping-pill house-${status}"><span></span>${housekeepingLabel(status)}</span><strong>${count}</strong></div>`).join('')}</div>
-			<section class="panel full-panel"><div class="panel-heading"><div><h2>Room tasks</h2><p>Update room status as work is completed</p></div></div><div class="table-scroll"><table class="data-table housekeeping-table"><thead><tr><th>ROOM</th><th>ROOM TYPE</th><th>IN-HOUSE GUEST</th><th>STATUS</th><th></th></tr></thead><tbody>${housekeepingRows}</tbody></table></div></section>`;
+			<section class="panel full-panel"><div class="panel-heading"><div><h2>Room tasks</h2><p>Update room status as work is completed</p></div></div>${rooms.length ? `<div class="table-scroll"><table class="data-table housekeeping-table"><thead><tr><th>ROOM</th><th>ROOM TYPE</th><th>IN-HOUSE GUEST</th><th>STATUS</th><th></th></tr></thead><tbody>${housekeepingRows}</tbody></table></div>` : '<p class="empty-inline">No rooms to tidy yet. Add a room to start housekeeping.</p>'}</section>`;
 	};
 	const renderReports = () => {
 		const occupied = state.rooms.filter((room) => bookingForRoomToday(room.number)?.status === 'checked-in').length;
@@ -199,13 +184,13 @@
 		const averageRate = active.length ? Math.round(active.reduce((sum, booking) => sum + (state.rooms.find((room) => room.number === booking.room)?.rate || 0), 0) / active.length) : 0;
 		const revenue = active.reduce((sum, booking) => sum + (state.rooms.find((room) => room.number === booking.room)?.rate || 0), 0);
 		const week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-		const values = [38, 55, 48, 73, 62, 91, occupancy || 14];
+		const values = state.bookings.length ? [38, 55, 48, 73, 62, 91, occupancy || 14] : [0, 0, 0, 0, 0, 0, 0];
 		return `${pageHeading('INSIGHTS', 'Reports', 'A snapshot of how your property is performing.')}
 			<div class="metric-grid"><article class="metric-card"><div class="metric-top"><span>Occupancy today</span>${icon('chart-no-axes-combined', 'metric-plain-icon')}</div><div class="metric-value">${occupancy}<small>%</small></div><div class="metric-foot"><span>Based on checked-in rooms</span><span>${state.rooms.length} keys</span></div></article><article class="metric-card"><div class="metric-top"><span>Average daily rate</span>${icon('badge-dollar-sign', 'metric-plain-icon')}</div><div class="metric-value metric-currency">$${averageRate}</div><div class="metric-foot"><span>For active reservations</span><span>per night</span></div></article><article class="metric-card"><div class="metric-top"><span>Room revenue</span>${icon('wallet', 'metric-plain-icon')}</div><div class="metric-value metric-currency">$${revenue.toLocaleString('en-US')}</div><div class="metric-foot"><span>Active stay value</span><span>per night</span></div></article><article class="metric-card"><div class="metric-top"><span>Confirmed stays</span>${icon('calendar-check-2', 'metric-plain-icon')}</div><div class="metric-value">${state.bookings.filter((booking) => booking.status === 'confirmed').length.toString().padStart(2, '0')}</div><div class="metric-foot"><span>Upcoming reservations</span><span>on the books</span></div></article></div>
 			<div class="report-grid"><section class="panel report-panel"><div class="panel-heading"><div><h2>Occupancy trend</h2><p>Daily room occupancy · this week</p></div><span class="report-period">This week ${icon('chevron-down')}</span></div><div class="chart-wrap"><div class="chart-y-labels"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div><div class="chart-area"><div class="chart-grid-lines"><i></i><i></i><i></i><i></i><i></i></div><div class="chart-bars">${week.map((day, index) => `<div class="chart-day"><div class="chart-bar-column"><span class="chart-bar ${index === 6 ? 'chart-bar-today' : ''}" style="height:${values[index]}%" title="${values[index]}%"></span></div><span>${day}</span></div>`).join('')}</div></div></div></section><section class="panel report-panel mix-panel"><div class="panel-heading"><div><h2>Room mix</h2><p>Inventory by room type</p></div></div><div class="mix-list">${[...new Set(state.rooms.map((room) => room.type))].map((type, index) => { const count = state.rooms.filter((room) => room.type === type).length; const colors = ['mix-green', 'mix-blue', 'mix-amber', 'mix-coral']; return `<div class="mix-item"><span class="mix-dot ${colors[index % colors.length]}"></span><span>${escapeHtml(type)}</span><strong>${count}</strong><div class="mix-track"><i class="${colors[index % colors.length]}" style="width:${(count / state.rooms.length) * 100}%"></i></div></div>`; }).join('')}</div></section></div>`;
 	};
 	const renderSettings = () => `${pageHeading('PROPERTY', 'Settings', 'Property details and front desk preferences.')}
-		<section class="panel settings-panel"><div class="settings-section"><div><h2>Property profile</h2><p>Information shown to your team</p></div><div class="settings-form"><label class="field">Property name<input value="Morrow House" id="property-name"></label><label class="field">Location<input value="Portland, Oregon" id="property-location"></label><label class="field">Default check-in time<input value="3:00 PM" id="checkin-time"></label><label class="field">Default check-out time<input value="11:00 AM" id="checkout-time"></label><button class="button button-primary" data-action="save-settings">${icon('check')} Save changes</button></div></div><div class="settings-section settings-danger"><div><h2>Demo data</h2><p>Restore the original sample reservations and room statuses.</p></div><button class="button button-outline" data-action="reset-demo">${icon('rotate-ccw')} Reset demo data</button></div></section>`;
+		<section class="panel settings-panel"><div class="settings-section"><div><h2>Property profile</h2><p>Information shown to your team</p></div><div class="settings-form"><label class="field">Property name<input value="Morrow House" id="property-name"></label><label class="field">Location<input value="Portland, Oregon" id="property-location"></label><label class="field">Default check-in time<input value="3:00 PM" id="checkin-time"></label><label class="field">Default check-out time<input value="11:00 AM" id="checkout-time"></label><button class="button button-primary" data-action="save-settings">${icon('check')} Save changes</button></div></div><div class="settings-section settings-danger"><div><h2>Workspace data</h2><p>Clear all rooms and reservations from this browser.</p></div><button class="button button-outline" data-action="reset-demo">${icon('rotate-ccw')} Clear workspace</button></div></section>`;
 	const render = () => {
 		const views = { overview: renderOverview, reservations: renderReservations, rooms: renderRooms, guests: renderGuests, housekeeping: renderHousekeeping, reports: renderReports, settings: renderSettings };
 		const titles = { overview: 'Overview', reservations: 'Reservations', rooms: 'Rooms', guests: 'Guests', housekeeping: 'Housekeeping', reports: 'Reports', settings: 'Settings' };
@@ -216,6 +201,11 @@
 		refreshIcons();
 	};
 	const openBookingDialog = () => {
+		if (!state.rooms.length) {
+			toast('Add a room first so we can place your guest.', 'bed-double');
+			setView('rooms');
+			return;
+		}
 		const roomSelect = bookingForm.elements.room;
 		const checkin = bookingForm.elements.checkin.value || isoDate(today);
 		const checkout = bookingForm.elements.checkout.value || addDays(1);
@@ -256,6 +246,12 @@
 		if (!actionButton) return;
 		const { action, id, room: roomNumber } = actionButton.dataset;
 		if (action === 'new-booking') return openBookingDialog();
+		if (action === 'add-room') {
+			roomForm.reset();
+			roomDialog.showModal();
+			refreshIcons();
+			return;
+		}
 		if (action === 'check-in' || action === 'check-out') {
 			const booking = state.bookings.find((item) => item.id === id);
 			if (!booking) return;
@@ -303,11 +299,12 @@
 		}
 		if (action === 'save-settings') return toast('Property settings saved.');
 		if (action === 'reset-demo') {
-			state.bookings = sampleBookings.map((booking) => ({ ...booking }));
-			state.rooms = roomSeed.map((room) => ({ ...room }));
+			if (!window.confirm('Clear every room and reservation from this browser?')) return;
+			state.bookings = [];
+			state.rooms = [];
 			saveState();
 			render();
-			return toast('Sample data restored.');
+			return toast('Your workspace is clear.');
 		}
 	});
 	document.querySelector('#global-search').addEventListener('input', (event) => {
@@ -322,6 +319,20 @@
 		nextDay.setDate(nextDay.getDate() + 1);
 		bookingForm.elements.checkout.min = isoDate(nextDay);
 		if (bookingForm.elements.checkout.value <= bookingForm.elements.checkin.value) bookingForm.elements.checkout.value = isoDate(nextDay);
+	});
+	roomForm.addEventListener('submit', (event) => {
+		event.preventDefault();
+		const formData = new FormData(roomForm);
+		const number = String(formData.get('number')).trim();
+		if (state.rooms.some((room) => room.number.toLowerCase() === number.toLowerCase())) {
+			toast(`Room ${number} already exists.`, 'circle-alert');
+			return;
+		}
+		state.rooms.push({ number, type: String(formData.get('type')).trim(), floor: String(formData.get('floor')), rate: Number(formData.get('rate')), housekeeping: 'clean' });
+		saveState();
+		roomDialog.close();
+		render();
+		return toast(`Room ${number} is ready for its first guest.`, 'bed-double');
 	});
 	bookingForm.addEventListener('submit', (event) => {
 		event.preventDefault();
@@ -357,6 +368,7 @@
 		toast(`Reservation created for ${guest}.`);
 	});
 	document.querySelectorAll('[data-close-dialog]').forEach((buttonElement) => buttonElement.addEventListener('click', () => dialog.close()));
+	document.querySelectorAll('[data-close-room-dialog]').forEach((buttonElement) => buttonElement.addEventListener('click', () => roomDialog.close()));
 	document.querySelector('#notification-button').addEventListener('click', () => toast('You are all caught up.', 'bell'));
 	document.querySelector('#support-button').addEventListener('click', () => toast('Support: hello@morrowhouse.example', 'headset'));
 	document.querySelector('#profile-button').addEventListener('click', () => toast('Signed in as Jordan Lee.', 'user-round'));
