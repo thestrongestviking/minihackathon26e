@@ -3,12 +3,71 @@
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>My Page</title>
-        <link rel="stylesheet" href="styles./css">
+		<meta name="theme-color" content="#f6f5f1">
+		<title>Morrow House | Hotel operations</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="styles.css">
+		<script src="https://unpkg.com/lucide@latest" defer></script>
 		<script src="script.js" defer></script>
 	</head>
 	<body>
-		<h1>My Page</h1>
-		<p>Welcome.</p>
+		<div class="app-shell">
+			<aside class="sidebar" id="sidebar">
+				<a class="brand" href="#overview" aria-label="Morrow House overview">
+					<span class="brand-mark"><i data-lucide="hotel"></i></span>
+					<span class="brand-copy"><strong>MORROW</strong><small>HOUSE · BOUTIQUE HOTEL</small></span>
+				</a>
+				<div class="property-switcher"><span class="property-dot"></span><span><strong>Morrow House</strong><small>Portland, Oregon</small></span><i data-lucide="chevrons-up-down"></i></div>
+				<div class="nav-label">WORKSPACE</div>
+				<nav class="primary-nav" aria-label="Main navigation">
+					<button class="nav-item active" data-view="overview"><i data-lucide="layout-dashboard"></i><span>Overview</span></button>
+					<button class="nav-item" data-view="reservations"><i data-lucide="calendar-days"></i><span>Reservations</span><span class="nav-count" id="reservation-count">0</span></button>
+					<button class="nav-item" data-view="rooms"><i data-lucide="bed-double"></i><span>Rooms</span></button>
+					<button class="nav-item" data-view="guests"><i data-lucide="users-round"></i><span>Guests</span></button>
+					<button class="nav-item" data-view="housekeeping"><i data-lucide="sparkles"></i><span>Housekeeping</span><span class="nav-indicator"></span></button>
+				</nav>
+				<div class="nav-label nav-label-spaced">MANAGEMENT</div>
+				<nav class="primary-nav" aria-label="Management navigation">
+					<button class="nav-item" data-view="reports"><i data-lucide="chart-no-axes-combined"></i><span>Reports</span></button>
+					<button class="nav-item" data-view="settings"><i data-lucide="settings-2"></i><span>Settings</span></button>
+				</nav>
+				<div class="sidebar-bottom">
+					<div class="help-card"><span class="help-icon"><i data-lucide="headset"></i></span><strong>Need a hand?</strong><small>Our team is here for you.</small><button class="text-button" id="support-button">Contact support <i data-lucide="arrow-up-right"></i></button></div>
+					<button class="profile-button" id="profile-button"><span class="avatar avatar-dark">JL</span><span class="profile-copy"><strong>Jordan Lee</strong><small>Hotel manager</small></span><i data-lucide="more-horizontal"></i></button>
+				</div>
+			</aside>
+			<main class="main-area">
+				<header class="topbar">
+					<button class="icon-button mobile-menu" id="menu-button" aria-label="Open navigation"><i data-lucide="menu"></i></button>
+					<div class="breadcrumb"><span>Morrow House</span><i data-lucide="chevron-right"></i><strong id="breadcrumb-current">Overview</strong></div>
+					<div class="topbar-actions">
+						<label class="search-box"><i data-lucide="search"></i><input id="global-search" type="search" placeholder="Search anything..." aria-label="Search reservations and guests"><kbd>⌘ K</kbd></label>
+						<button class="icon-button notification-button" id="notification-button" aria-label="Notifications"><i data-lucide="bell"></i><span></span></button>
+						<div class="topbar-divider"></div>
+						<button class="avatar avatar-green" id="top-avatar" aria-label="Jordan Lee profile">JL</button>
+					</div>
+				</header>
+				<section class="page-content" id="page-content" aria-live="polite"></section>
+			</main>
+		</div>
+		<div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+		<dialog class="booking-dialog" id="booking-dialog" aria-labelledby="booking-title">
+			<form id="booking-form">
+				<div class="dialog-header"><div><span class="eyebrow">MORROW HOUSE</span><h2 id="booking-title">New reservation</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="Close dialog"><i data-lucide="x"></i></button></div>
+				<div class="form-grid">
+					<label class="field field-wide">Guest name<input name="guest" required placeholder="e.g. Alex Morgan" autocomplete="name"></label>
+					<label class="field">Email address<input name="email" type="email" required placeholder="alex@example.com" autocomplete="email"></label>
+					<label class="field">Phone number<input name="phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel"></label>
+					<label class="field">Check-in<input name="checkin" type="date" required></label>
+					<label class="field">Check-out<input name="checkout" type="date" required></label>
+					<label class="field">Room<select name="room" required></select></label>
+					<label class="field">Guests<select name="guests"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+					<label class="field field-wide">Special requests<textarea name="notes" rows="2" placeholder="Anything we should know?"></textarea></label>
+				</div>
+				<div class="dialog-footer"><span class="form-note"><i data-lucide="shield-check"></i> Guest details stay private</span><button class="button button-primary" type="submit"><i data-lucide="check"></i> Create reservation</button></div>
+			</form>
+		</dialog>
 	</body>
 </html>
