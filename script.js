@@ -59,7 +59,11 @@
 			{ name: 'Mila Brooks', role: 'lifeguard', salary: 39000, status: 'active' },
 			{ name: 'Olivia Shaw', role: 'frontdesk', salary: 44000, status: 'active' },
 			{ name: 'Jordan Lee', role: 'hr', salary: 58000, status: 'active' },
-			{ name: 'Ava Brooks', role: 'support', salary: 44000, status: 'active' }
+			{ name: 'Ava Brooks', role: 'support', salary: 44000, status: 'active' },
+			{ name: 'Ethan Cole', role: 'valet', salary: 36000, status: 'active' },
+			{ name: 'Marcus Reed', role: 'security', salary: 42000, status: 'active' },
+			{ name: 'Miles Carter', role: 'bellhop', salary: 34000, status: 'active' },
+			{ name: 'Grace Parker', role: 'roomservice', salary: 36000, status: 'active' }
 		],
 		breakfast: {
 			serviceTime: '7:00 AM',
@@ -94,21 +98,45 @@
 		configTab: 'property',
 		reservationFilter: 'all'
 	};
-	const HOTEL_OPTIONS = [
+	const BUILT_IN_HOTELS = [
 		{ id: 'blank', name: blankState.config.hotelName, description: 'Start with an empty property and protected Admin and Manager accounts.', icon: 'building-2' },
 		{ id: 'morioh', name: defaultState.config.hotelName, description: 'Open the sample rooms, bookings, team, breakfast, and pool setup.', icon: 'landmark' }
 	];
 	const cloneState = (value) => JSON.parse(JSON.stringify(value));
-	const salaryDefaults = { admin: 75000, manager: 68000, cleaner: 42000, cleaner2: 42000, cook: 46000, lifeguard: 39000, frontdesk: 44000, hr: 58000, support: 44000 };
+	const CUSTOM_HOTELS_STORAGE_KEY = 'ellenjoe-hotel-workspaces-v1';
+	const savedCustomHotels = readStore(CUSTOM_HOTELS_STORAGE_KEY, []);
+	let customHotels = Array.isArray(savedCustomHotels)
+		? savedCustomHotels.filter((hotel) => hotel && typeof hotel.id === 'string' && /^custom-[a-z0-9-]+$/.test(hotel.id) && typeof hotel.name === 'string' && hotel.name.trim()).map((hotel) => ({
+			id: hotel.id,
+			name: hotel.name.trim(),
+			description: typeof hotel.location === 'string' && hotel.location.trim() ? hotel.location.trim() : 'Custom hotel workspace',
+			icon: 'building-2',
+			location: typeof hotel.location === 'string' ? hotel.location : ''
+		}))
+		: [];
+	const getHotelOptions = () => [...BUILT_IN_HOTELS, ...customHotels];
+	const saveCustomHotels = () => localStorage.setItem(CUSTOM_HOTELS_STORAGE_KEY, JSON.stringify(customHotels));
+	const salaryDefaults = { admin: 75000, manager: 68000, cleaner: 42000, cleaner2: 42000, cook: 46000, lifeguard: 39000, frontdesk: 44000, hr: 58000, support: 44000, valet: 36000, security: 42000, bellhop: 34000, roomservice: 36000 };
+	const MORIOH_SAMPLE_EMPLOYEE_RENAMES = {
+		'valet:Keiko Tanaka': 'Ethan Cole',
+		'security:Riku Hayashi': 'Marcus Reed',
+		'bellhop:Sora Fujimoto': 'Miles Carter',
+		'roomservice:Yuna Matsuda': 'Grace Parker'
+	};
 	const normalizeHotelState = (savedState, hotelId) => {
-		if (hotelId === 'blank' && savedState?.blankTemplateVersion !== 2) savedState = null;
-		const defaults = hotelId === 'blank' ? blankState : defaultState;
+		if (hotelId !== 'morioh' && savedState?.blankTemplateVersion !== 2) savedState = null;
+		const defaults = hotelId === 'morioh' ? defaultState : blankState;
 		const normalized = { ...cloneState(defaults), ...(savedState || {}) };
 		normalized.config = {
 			...defaults.config,
 			...(savedState?.config || {}),
 			features: { ...defaults.config.features, ...(savedState?.config?.features || {}) }
 		};
+		const customHotel = customHotels.find((hotel) => hotel.id === hotelId);
+		if (customHotel) {
+			normalized.config.hotelName = savedState?.config?.hotelName || customHotel.name;
+			normalized.config.location = savedState?.config?.location ?? customHotel.location;
+		}
 		if (hotelId === 'morioh' && ['Ellen Joe Hotel', 'Ellen Joe Hotel Manager'].includes(normalized.config.hotelName)) normalized.config.hotelName = DEFAULT_CONFIG.hotelName;
 		normalized.rooms = Array.isArray(savedState?.rooms) ? savedState.rooms : cloneState(defaults.rooms);
 		normalized.bookings = Array.isArray(savedState?.bookings) ? savedState.bookings : cloneState(defaults.bookings);
@@ -121,6 +149,11 @@
 			if (!normalized.employees.some((employee) => employee.role === protectedEmployee.role)) normalized.employees.push(cloneState(protectedEmployee));
 		}
 		if (hotelId === 'morioh') {
+			for (const employee of normalized.employees) {
+			const replacementName = MORIOH_SAMPLE_EMPLOYEE_RENAMES[`${employee.role}:${employee.name}`]
+					|| (employee.role === 'bellhop' && employee.name.trim().toLowerCase() === 'bob' ? 'Robert Hayes' : null);
+				if (replacementName) employee.name = replacementName;
+			}
 			for (const defaultEmployee of defaults.employees) {
 				if (!normalized.employees.some((employee) => employee.name === defaultEmployee.name && employee.role === defaultEmployee.role)) normalized.employees.push(cloneState(defaultEmployee));
 			}
@@ -153,6 +186,8 @@
 	const hotelSelectScreen = document.querySelector('#hotel-select-screen');
 	const hotelChoiceGrid = document.querySelector('#hotel-choice-grid');
 	const resetDefaultDescription = document.querySelector('#reset-default-description');
+	const addHotelDialog = document.querySelector('#add-hotel-dialog');
+	const addHotelForm = document.querySelector('#add-hotel-form');
 	const hotelBackButton = document.querySelector('#back-to-hotels');
 	const appShell = document.querySelector('#app-shell');
 	const rolePicker = document.querySelector('#role-picker');
@@ -177,10 +212,15 @@
 		cleaner: { title: 'Cleaner', description: 'Assigned cleaning tasks and issue reporting', nav: ['tasks', 'requests'] },
 		cleaner2: { title: 'Cleaner', description: 'Assigned cleaning tasks and issue reporting', nav: ['tasks', 'requests'] },
 		cook: { title: 'Cook', description: 'Breakfast prep and kitchen service', nav: ['breakfast'] },
-		lifeguard: { title: 'Lifeguard', description: 'Pool safety and guest monitoring', nav: ['pool'] }
+		lifeguard: { title: 'Lifeguard', description: 'Pool safety and guest monitoring', nav: ['pool'] },
+		valet: { title: 'Valet', description: 'Coordinate guest arrivals and vehicle requests', nav: ['requests'] },
+		security: { title: 'Security', description: 'Monitor hotel operations and report safety concerns', nav: ['requests'] },
+		bellhop: { title: 'Bellhop', description: 'Assist arriving guests and support their stay', nav: ['requests'] },
+		roomservice: { title: 'Room service attendant', description: 'Coordinate in-room guest service requests', nav: ['requests'] }
 	};
-	const SALARY_GUIDE = { admin: 75000, manager: 68000, cleaner: 42000, cleaner2: 42000, cook: 46000, lifeguard: 39000, frontdesk: 44000, hr: 58000, support: 44000 };
-	const getAvailableEmployeeRoles = () => Object.entries(ROLE_LABELS).filter(([role]) => role !== 'admin' && (role !== 'cook' || state.config.features.continentalBreakfast) && (role !== 'lifeguard' || state.config.features.pool));
+	const SALARY_GUIDE = { admin: 75000, manager: 68000, cleaner: 42000, cleaner2: 42000, cook: 46000, lifeguard: 39000, frontdesk: 44000, hr: 58000, support: 44000, valet: 36000, security: 42000, bellhop: 34000, roomservice: 36000 };
+	const REQUESTING_STAFF_ROLES = ['valet', 'security', 'bellhop', 'roomservice'];
+	const getAvailableEmployeeRoles = () => Object.entries(ROLE_LABELS).filter(([role]) => role !== 'admin');
 	const populateEmployeeRoleSelect = () => {
 		const roleSelect = employeeForm.querySelector('[name="employee-role"]');
 		const placeholder = document.createElement('option');
@@ -260,8 +300,9 @@
 	}).join('');
 	const button = (label, iconName, extra = '') => `<button class="button button-primary ${extra}" data-action="new-booking">${icon(iconName)} ${label}</button>`;
 	const renderHotelSelect = () => {
-		hotelChoiceGrid.innerHTML = HOTEL_OPTIONS.map((hotel) => `<button class="hotel-choice hotel-choice-${hotel.id}" type="button" data-hotel="${hotel.id}"><span class="hotel-choice-icon">${icon(hotel.icon)}</span><span class="hotel-choice-copy"><strong>${escapeHtml(hotel.name)}</strong><small>${escapeHtml(hotel.description)}</small></span>${icon('arrow-right', 'hotel-choice-arrow')}</button>`).join('');
-		resetDefaultDescription.textContent = `This will erase saved changes for ${HOTEL_OPTIONS.map((hotel) => hotel.name).join(' and ')}, including rooms, bookings, staff, salaries, and service settings. This cannot be undone.`;
+		const hotelOptions = getHotelOptions();
+		hotelChoiceGrid.innerHTML = hotelOptions.map((hotel) => `<button class="hotel-choice hotel-choice-${hotel.id}" type="button" data-hotel="${escapeHtml(hotel.id)}"><span class="hotel-choice-icon">${icon(hotel.icon)}</span><span class="hotel-choice-copy"><strong>${escapeHtml(hotel.name)}</strong><small>${escapeHtml(hotel.description)}</small></span>${icon('arrow-right', 'hotel-choice-arrow')}</button>`).join('');
+		resetDefaultDescription.textContent = `This will erase saved changes for all ${hotelOptions.length} hotel workspaces, including rooms, bookings, staff, salaries, and service settings. This cannot be undone.`;
 		hotelSelectScreen.hidden = false;
 		loginScreen.hidden = true;
 		appShell.hidden = true;
@@ -497,16 +538,34 @@
 	};
 	const renderRequests = () => {
 		const isCleaner = ['cleaner', 'cleaner2'].includes(state.currentUser.role);
-		const categories = isCleaner ? ['Room cleaning update', 'Room maintenance', 'Cleaning supplies', 'Other'] : ['Guest complaint', 'Room issue', 'Booking question', 'Other'];
-		const recent = state.tickets.filter((ticket) => ticket.guest === state.currentUser.name).slice(0, 5);
+		const isRequestingStaff = REQUESTING_STAFF_ROLES.includes(state.currentUser.role);
+		const staffCategories = {
+			valet: ['Vehicle request', 'Arrival assistance', 'Other'],
+			security: ['Safety concern', 'Security incident', 'Other'],
+			bellhop: ['Luggage assistance', 'Guest arrival', 'Other'],
+			roomservice: ['Room service request', 'Delivery issue', 'Other']
+		};
+		const categories = isCleaner
+			? ['Room cleaning update', 'Room maintenance', 'Cleaning supplies', 'Other']
+			: staffCategories[state.currentUser.role] || ['Guest complaint', 'Room issue', 'Booking question', 'Other'];
+		const title = isCleaner || isRequestingStaff ? 'Report an issue' : 'Guest complaints';
+		const description = isCleaner
+			? 'Send a room or supply issue to the support team.'
+			: isRequestingStaff
+				? 'Send an operational update to the hotel support team.'
+				: 'Record a guest complaint or service issue for follow-up.';
+		const recent = state.tickets.filter((ticket) => (ticket.requester || ticket.guest) === state.currentUser.name).slice(0, 5);
 		const rows = recent.map((ticket) => `<tr><td>${escapeHtml(ticket.id)}</td><td>${escapeHtml(ticket.issue)}</td><td><span class="status-pill status-${ticket.status === 'Open' ? 'checked-in' : 'confirmed'}"><span></span>${escapeHtml(ticket.status)}</span></td></tr>`).join('');
-		return `${pageHeading(isCleaner ? 'HOUSEKEEPING' : 'FRONT DESK', isCleaner ? 'Report an issue' : 'Guest complaints', isCleaner ? 'Send a room or supply issue to the support team.' : 'Record a guest complaint or service issue for follow-up.')}
+		return `${pageHeading(isCleaner ? 'HOUSEKEEPING' : isRequestingStaff ? 'HOTEL OPERATIONS' : 'FRONT DESK', title, description)}
 			<section class="panel request-panel"><form id="request-form" class="request-form"><label class="field">Request type<select name="category" required>${categories.map((category) => `<option>${escapeHtml(category)}</option>`).join('')}</select></label><label class="field">Room<input name="room" maxlength="30" placeholder="Optional"></label><label class="field field-wide">Details<textarea name="details" required rows="4" placeholder="Describe the issue or complaint"></textarea></label><button class="button button-primary" type="submit">${icon('send')} Submit request</button></form></section>
 			<section class="panel full-panel request-history"><div class="panel-heading"><div><h2>Recent requests</h2><p>Your latest submissions</p></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>REFERENCE</th><th>REQUEST</th><th>STATUS</th></tr></thead><tbody>${rows || '<tr><td class="empty-cell" colspan="3">No requests submitted yet.</td></tr>'}</tbody></table></div></section>`;
 	};
 	const renderSupportHub = () => {
 		const openTickets = state.tickets.filter((ticket) => ticket.status === 'Open');
-		const rows = state.tickets.map((ticket) => `<tr><td>${escapeHtml(ticket.id)}</td><td><div class="guest-cell"><span class="avatar avatar-soft">${escapeHtml(initials(ticket.guest))}</span><span><strong>${escapeHtml(ticket.guest)}</strong><small>${escapeHtml(ticket.room || 'No room specified')}</small></span></div></td><td>${escapeHtml(ticket.issue)}</td><td><span class="status-pill status-${ticket.priority === 'High' ? 'checked-in' : 'confirmed'}"><span></span>${escapeHtml(ticket.priority)}</span></td><td>${escapeHtml(ticket.status)}</td><td><button class="row-action" data-action="toggle-ticket" data-id="${escapeHtml(ticket.id)}">${ticket.status === 'Open' ? 'Resolve' : 'Reopen'}</button></td></tr>`).join('');
+		const rows = state.tickets.map((ticket) => {
+			const requester = ticket.requester || ticket.guest;
+			return `<tr><td>${escapeHtml(ticket.id)}</td><td><div class="guest-cell"><span class="avatar avatar-soft">${escapeHtml(initials(requester))}</span><span><strong>${escapeHtml(requester)}</strong><small>${escapeHtml(ticket.room || 'No room specified')}</small></span></div></td><td>${escapeHtml(ticket.issue)}</td><td><span class="status-pill status-${ticket.priority === 'High' ? 'checked-in' : 'confirmed'}"><span></span>${escapeHtml(ticket.priority)}</span></td><td>${escapeHtml(ticket.status)}</td><td><button class="row-action" data-action="toggle-ticket" data-id="${escapeHtml(ticket.id)}">${ticket.status === 'Open' ? 'Resolve' : 'Reopen'}</button></td></tr>`;
+		}).join('');
 		return `${pageHeading('GUEST CARE', 'Support desk', 'Track current guest requests and resolve issues fast.')}
 			<div class="metric-grid"><article class="metric-card"><div class="metric-top"><span>Open requests</span><span class="metric-icon metric-icon-coral">${icon('life-buoy')}</span></div><div class="metric-value">${openTickets.length.toString().padStart(2, '0')}</div><div class="metric-foot"><span>Guest issues needing attention</span><span>today</span></div></article><article class="metric-card"><div class="metric-top"><span>Resolved</span><span class="metric-icon metric-icon-green">${icon('check-circle-2')}</span></div><div class="metric-value">${(state.tickets.length - openTickets.length).toString().padStart(2, '0')}</div><div class="metric-foot"><span>Tickets closed this week</span><span>with care</span></div></article></div>
 			<section class="panel full-panel"><div class="panel-heading"><div><h2>Guest issues</h2><p>Support queue for ${escapeHtml(state.config.hotelName)}</p></div></div><div class="table-scroll"><table class="data-table"><thead><tr><th>TICKET</th><th>REQUESTER</th><th>ISSUE</th><th>PRIORITY</th><th>STATUS</th><th></th></tr></thead><tbody>${rows || '<tr><td class="empty-cell" colspan="6">No support tickets.</td></tr>'}</tbody></table></div></section>`;
@@ -537,7 +596,11 @@
 			cleaner2: { tasks: renderCleanerTasks, requests: renderRequests },
 			cook: { breakfast: renderCookBreakfast },
 			support: { support: renderSupportHub, reports: renderReports },
-			lifeguard: { pool: renderPoolHub }
+			lifeguard: { pool: renderPoolHub },
+			valet: { requests: renderRequests },
+			security: { requests: renderRequests },
+			bellhop: { requests: renderRequests },
+			roomservice: { requests: renderRequests }
 		};
 		const currentViews = roleViews[state.currentUser.role] || roleViews.manager;
 		if (!currentViews[state.view]) state.view = Object.keys(currentViews)[0];
@@ -556,7 +619,7 @@
 		toast(`Signed in as ${name}.`, 'check');
 	};
 	const selectHotel = (hotelId) => {
-		if (!HOTEL_OPTIONS.some((hotel) => hotel.id === hotelId)) return;
+		if (!getHotelOptions().some((hotel) => hotel.id === hotelId)) return;
 		currentHotelId = hotelId;
 		state = loadHotelState(hotelId);
 		state.currentUser = null;
@@ -609,6 +672,10 @@
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	};
 	document.addEventListener('click', (event) => {
+		if (event.target.closest('[data-close-add-hotel]')) {
+			addHotelDialog.close();
+			return;
+		}
 		if (event.target.closest('[data-close-reset-default]')) {
 			resetDefaultDialog.close();
 			return;
@@ -639,20 +706,26 @@
 		const actionButton = event.target.closest('[data-action]');
 		if (!actionButton) return;
 		const { action, id, room: roomNumber } = actionButton.dataset;
+		if (action === 'open-add-hotel') {
+			addHotelForm.reset();
+			addHotelDialog.showModal();
+			refreshIcons();
+			return;
+		}
 		if (action === 'open-reset-default') {
 			resetDefaultDialog.showModal();
 			refreshIcons();
 			return;
 		}
 		if (action === 'confirm-reset-default') {
-			HOTEL_OPTIONS.forEach((hotel) => localStorage.removeItem(hotelStorageKey(hotel.id)));
+			getHotelOptions().forEach((hotel) => localStorage.removeItem(hotelStorageKey(hotel.id)));
 			localStorage.removeItem('ellenjoe-hotel-state-v1');
 			legacyMoriohState = null;
 			currentHotelId = null;
 			state = loadHotelState('morioh');
 			resetDefaultDialog.close();
 			render();
-			return toast('Both hotels have been restored to their defaults.', 'rotate-ccw');
+			return toast('All hotel workspaces have been restored to their defaults.', 'rotate-ccw');
 		}
 		if (action === 'logout') {
 			state.currentUser = null;
@@ -814,6 +887,13 @@
 			const nextLocation = document.querySelector('#property-location')?.value?.trim() || state.config.location;
 			state.config.hotelName = nextName;
 			state.config.location = nextLocation;
+			const customHotel = customHotels.find((hotel) => hotel.id === currentHotelId);
+			if (customHotel) {
+				customHotel.name = nextName;
+				customHotel.description = nextLocation || 'Custom hotel workspace';
+				customHotel.location = nextLocation;
+				saveCustomHotels();
+			}
 			state.config.features.continentalBreakfast = document.querySelector('#feature-breakfast')?.checked ?? state.config.features.continentalBreakfast;
 			state.config.features.pool = document.querySelector('#feature-pool')?.checked ?? state.config.features.pool;
 			saveState();
@@ -821,10 +901,32 @@
 			return toast('Property settings saved.');
 		}
 	});
+	addHotelForm.addEventListener('submit', (event) => {
+		event.preventDefault();
+		const formData = new FormData(addHotelForm);
+		const name = String(formData.get('hotel-name')).trim();
+		const location = String(formData.get('hotel-location')).trim();
+		if (!name) return toast('Enter a hotel name first.', 'circle-alert');
+		if (getHotelOptions().some((hotel) => hotel.name.toLowerCase() === name.toLowerCase())) {
+			return toast('A hotel with that name already exists.', 'circle-alert');
+		}
+		const slug = name.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'hotel';
+		const hotel = { id: `custom-${slug}-${Date.now().toString(36)}`, name, description: location || 'Custom hotel workspace', icon: 'building-2', location };
+		customHotels.push(hotel);
+		saveCustomHotels();
+		const initialState = cloneState(blankState);
+		initialState.config.hotelName = name;
+		initialState.config.location = location;
+		localStorage.setItem(hotelStorageKey(hotel.id), JSON.stringify(initialState));
+		addHotelDialog.close();
+		addHotelForm.reset();
+		selectHotel(hotel.id);
+		toast(`${name} workspace created.`, 'hotel');
+	});
 	page.addEventListener('submit', (event) => {
 		if (event.target.id !== 'request-form') return;
 		event.preventDefault();
-		if (!['cleaner', 'cleaner2', 'frontdesk'].includes(state.currentUser?.role)) return;
+		if (!['cleaner', 'cleaner2', 'frontdesk', ...REQUESTING_STAFF_ROLES].includes(state.currentUser?.role)) return;
 		const formData = new FormData(event.target);
 		const category = String(formData.get('category')).trim();
 		const details = String(formData.get('details')).trim();
@@ -832,7 +934,7 @@
 		const room = String(formData.get('room')).trim();
 		state.tickets.unshift({
 			id: `T-${Date.now()}`,
-			guest: state.currentUser.name,
+			requester: state.currentUser.name,
 			room,
 			issue: `${category}: ${details}`,
 			priority: 'Normal',

@@ -19,7 +19,7 @@
 				<h1>Choose a hotel</h1>
 				<p>Select a workspace to continue.</p>
 				<div class="hotel-choice-grid" id="hotel-choice-grid"></div>
-				<div class="hotel-select-footer"><span>Hotel data is saved separately in this browser.</span><button class="reset-default-trigger" type="button" data-action="open-reset-default"> <i data-lucide="rotate-ccw"></i> Reset to default</button></div>
+				<div class="hotel-select-footer"><span>Hotel data is saved separately in this browser.</span><div class="hotel-select-actions"><button class="button button-primary" type="button" data-action="open-add-hotel"><i data-lucide="plus"></i> Add hotel</button><button class="reset-default-trigger" type="button" data-action="open-reset-default"><i data-lucide="rotate-ccw"></i> Reset to defaults</button></div></div>
 			</div>
 		</div>
 		<div class="login-screen" id="login-screen">
@@ -76,11 +76,21 @@
 			</main>
 		</div>
 		<div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+		<dialog class="booking-dialog add-hotel-dialog" id="add-hotel-dialog" aria-labelledby="add-hotel-title">
+			<form id="add-hotel-form">
+				<div class="dialog-header"><div><span class="eyebrow">NEW WORKSPACE</span><h2 id="add-hotel-title">Add a hotel</h2></div><button class="icon-button" type="button" data-close-add-hotel aria-label="Close dialog"><i data-lucide="x"></i></button></div>
+				<div class="form-grid">
+					<label class="field field-wide">Hotel name<input name="hotel-name" required maxlength="60" placeholder="e.g. Lakeside House"></label>
+					<label class="field field-wide">Location<input name="hotel-location" maxlength="80" placeholder="City or region (optional)"></label>
+				</div>
+				<div class="dialog-footer"><span class="form-note"><i data-lucide="shield-check"></i> Starts with protected Admin and Manager accounts</span><button class="button button-primary" type="submit"><i data-lucide="plus"></i> Create hotel</button></div>
+			</form>
+		</dialog>
 		<dialog class="booking-dialog reset-default-dialog" id="reset-default-dialog" aria-labelledby="reset-default-title">
 			<div class="reset-default-content">
 				<div class="dialog-header"><div><span class="eyebrow">RESET WORKSPACES</span><h2 id="reset-default-title">Restore hotel defaults?</h2></div><button class="icon-button" type="button" data-close-reset-default aria-label="Close dialog"><i data-lucide="x"></i></button></div>
 				<p id="reset-default-description">This will erase saved changes for all hotel workspaces, including rooms, bookings, staff, salaries, and service settings. This cannot be undone.</p>
-				<div class="reset-default-actions"><button class="button button-outline" type="button" data-close-reset-default>Cancel</button><button class="button reset-confirm-button" type="button" data-action="confirm-reset-default"><i data-lucide="rotate-ccw"></i> Reset both hotels</button></div>
+				<div class="reset-default-actions"><button class="button button-outline" type="button" data-close-reset-default>Cancel</button><button class="button reset-confirm-button" type="button" data-action="confirm-reset-default"><i data-lucide="rotate-ccw"></i> Reset all hotels</button></div>
 			</div>
 		</dialog>
 		<dialog class="booking-dialog" id="booking-dialog" aria-labelledby="booking-title">

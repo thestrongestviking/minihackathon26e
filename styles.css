@@ -94,6 +94,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .hotel-choice-copy small { color: #77827a; font-size: 11px; line-height: 1.5; }
 .hotel-choice-arrow { width: 17px; color: #75867a; }
 .hotel-select-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(112, 132, 117, .2); color: #7b867d; font-size: 10px; }
+.hotel-select-actions { display: flex; align-items: center; gap: 8px; }
+.add-hotel-dialog { width: min(480px, calc(100% - 30px)); }
 .reset-default-trigger { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border: 0; border-radius: 4px; background: transparent; color: #9d6257; cursor: pointer; font-size: 10px; font-weight: 600; }
 .reset-default-trigger:hover { background: #faeeeb; color: #8d4c40; }
 .reset-default-trigger svg { width: 14px; height: 14px; }
@@ -211,6 +213,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .role-option.cleaner { background: linear-gradient(180deg, #f3f8fb, #fbfdff); }
 .role-option.support { background: linear-gradient(180deg, #fffaf1, #fffcf9); }
 .role-option.frontdesk { background: linear-gradient(180deg, #f8f3ff, #fdfcff); }
+.role-option.valet { background: linear-gradient(180deg, #f1f8f4, #fbfdfb); }
+.role-option.security { background: linear-gradient(180deg, #fbf3f0, #fdfbfa); }
+.role-option.bellhop { background: linear-gradient(180deg, #fbf7ec, #fdfcf8); }
+.role-option.roomservice { background: linear-gradient(180deg, #f0f7f8, #fbfdfd); }
 
 @media (max-width: 760px) {
 	.hotel-select-screen { padding: 25px 18px; }
@@ -218,6 +224,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 	.hotel-choice-grid { grid-template-columns: 1fr; }
 	.hotel-choice { min-height: 125px; padding: 16px; }
 	.hotel-select-footer { align-items: flex-start; flex-direction: column; }
+	.hotel-select-actions { flex-wrap: wrap; }
 	.login-screen { padding: 26px 18px; }
 	.login-card { padding: 22px 18px; border-radius: 8px; }
 	.login-brand { margin-bottom: 14px; }
