@@ -4,7 +4,7 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="theme-color" content="#f6f5f1">
-		<title>Morrow House | Hotel operations</title>
+		<title>Ellen Joe Hotel Manager</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
@@ -13,60 +13,88 @@
 		<script src="script.js" defer></script>
 	</head>
 	<body>
-		<div class="app-shell">
-			<aside class="sidebar" id="sidebar">
-				<a class="brand" href="#overview" aria-label="Morrow House overview">
+		<div class="hotel-select-screen" id="hotel-select-screen" hidden>
+			<div class="hotel-select-card">
+				<div class="login-brand"><span class="brand-mark"><i data-lucide="hotel"></i></span><div><strong>Ellen Joe</strong><small>HOTEL MANAGER</small></div></div>
+				<h1>Choose a hotel</h1>
+				<p>Select a workspace to continue.</p>
+				<div class="hotel-choice-grid" id="hotel-choice-grid"></div>
+				<div class="hotel-select-footer"><span>Hotel data is saved separately in this browser.</span><button class="reset-default-trigger" type="button" data-action="open-reset-default"> <i data-lucide="rotate-ccw"></i> Reset to default</button></div>
+			</div>
+		</div>
+		<div class="login-screen" id="login-screen">
+			<div class="login-card">
+				<div class="login-brand">
 					<span class="brand-mark"><i data-lucide="hotel"></i></span>
-					<span class="brand-copy"><strong>MORROW</strong><small>HOUSE · BOUTIQUE HOTEL</small></span>
-				</a>
-				<div class="property-switcher"><span class="property-dot"></span><span><strong>Morrow House</strong><small>Portland, Oregon</small></span><i data-lucide="chevrons-up-down"></i></div>
+					<div>
+						<strong>Ellen Joe</strong>
+						<small>HOTEL MANAGER</small>
+					</div>
+				</div>
+				<h1 id="login-title">Welcome to your hotel</h1>
+				<p id="login-subtitle">Select your role to enter the operations dashboard.</p>
+				<button class="hotel-back-button" id="back-to-hotels" type="button" hidden><i data-lucide="arrow-left"></i> Choose another hotel</button>
+				<div class="role-picker" id="role-picker"></div>
+			</div>
+		</div>
+		<div class="app-shell" id="app-shell" hidden>
+			<aside class="sidebar" id="sidebar">
+				<div class="brand">
+					<span class="brand-mark"><i data-lucide="hotel"></i></span>
+					<span class="brand-copy"><strong id="property-brand-name">Hotel</strong><small>Ellen Joe Hotel Manager</small></span>
+				</div>
 				<div class="nav-label">WORKSPACE</div>
 				<nav class="primary-nav" aria-label="Main navigation">
 					<button class="nav-item active" data-view="overview"><i data-lucide="layout-dashboard"></i><span>Overview</span></button>
+					<button class="nav-item" data-view="breakfast"><i data-lucide="coffee"></i><span>Breakfast</span></button>
 					<button class="nav-item" data-view="reservations"><i data-lucide="calendar-days"></i><span>Reservations</span><span class="nav-count" id="reservation-count">0</span></button>
 					<button class="nav-item" data-view="rooms"><i data-lucide="bed-double"></i><span>Rooms</span></button>
 					<button class="nav-item" data-view="guests"><i data-lucide="users-round"></i><span>Guests</span></button>
-					<button class="nav-item" data-view="housekeeping"><i data-lucide="sparkles"></i><span>Housekeeping</span><span class="nav-indicator"></span></button>
+					<button class="nav-item" data-view="employees"><i data-lucide="users"></i><span>Employees</span></button>
+					<button class="nav-item" data-view="housekeeping"><i data-lucide="sparkles"></i><span>Housekeeping</span></button>
+					<button class="nav-item" data-view="tasks"><i data-lucide="clipboard-list"></i><span>My Tasks</span></button>
+					<button class="nav-item" data-view="requests"><i data-lucide="message-square-warning"></i><span>Report issue</span></button>
+					<button class="nav-item" data-view="support"><i data-lucide="life-buoy"></i><span>Support</span></button>
+					<button class="nav-item" data-view="pool"><i data-lucide="waves"></i><span>Pool</span></button>
 				</nav>
-				<div class="nav-label nav-label-spaced">MANAGEMENT</div>
+				<div class="nav-label nav-label-spaced" id="secondary-nav-label">INSIGHTS</div>
 				<nav class="primary-nav" aria-label="Management navigation">
 					<button class="nav-item" data-view="reports"><i data-lucide="chart-no-axes-combined"></i><span>Reports</span></button>
-					<button class="nav-item" data-view="settings"><i data-lucide="settings-2"></i><span>Settings</span></button>
+					<button class="nav-item" data-view="settings"><i data-lucide="settings-2"></i><span>Configuration</span></button>
 				</nav>
 				<div class="sidebar-bottom">
-					<div class="help-card"><span class="help-icon"><i data-lucide="headset"></i></span><strong>Need a hand?</strong><small>Our team is here for you.</small><button class="text-button" id="support-button">Contact support <i data-lucide="arrow-up-right"></i></button></div>
-					<button class="profile-button" id="profile-button"><span class="avatar avatar-dark">JL</span><span class="profile-copy"><strong>Jordan Lee</strong><small>Hotel manager</small></span><i data-lucide="more-horizontal"></i></button>
+					<div class="profile-identity"><strong id="profile-name">Ellen Joe</strong><small id="profile-role">Hotel manager</small></div>
+					<button class="sidebar-signout" type="button" data-action="logout" aria-label="Sign out"><i data-lucide="log-out"></i><span>Sign out</span></button>
 				</div>
 			</aside>
 			<main class="main-area">
 				<header class="topbar">
 					<button class="icon-button mobile-menu" id="menu-button" aria-label="Open navigation"><i data-lucide="menu"></i></button>
-					<div class="breadcrumb"><span>Morrow House</span><i data-lucide="chevron-right"></i><strong id="breadcrumb-current">Overview</strong></div>
-					<div class="topbar-actions">
-						<label class="search-box"><i data-lucide="search"></i><input id="global-search" type="search" placeholder="Search anything..." aria-label="Search reservations and guests"><kbd>⌘ K</kbd></label>
-						<button class="icon-button notification-button" id="notification-button" aria-label="Notifications"><i data-lucide="bell"></i><span></span></button>
-						<div class="topbar-divider"></div>
-						<button class="avatar avatar-green" id="top-avatar" aria-label="Jordan Lee profile">JL</button>
-					</div>
+					<div class="breadcrumb"><span id="breadcrumb-property">Hotel</span><i data-lucide="chevron-right"></i><strong id="breadcrumb-current">Overview</strong></div>
 				</header>
 				<section class="page-content" id="page-content" aria-live="polite"></section>
 			</main>
 		</div>
 		<div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="true"></div>
+		<dialog class="booking-dialog reset-default-dialog" id="reset-default-dialog" aria-labelledby="reset-default-title">
+			<div class="reset-default-content">
+				<div class="dialog-header"><div><span class="eyebrow">RESET WORKSPACES</span><h2 id="reset-default-title">Restore hotel defaults?</h2></div><button class="icon-button" type="button" data-close-reset-default aria-label="Close dialog"><i data-lucide="x"></i></button></div>
+				<p id="reset-default-description">This will erase saved changes for all hotel workspaces, including rooms, bookings, staff, salaries, and service settings. This cannot be undone.</p>
+				<div class="reset-default-actions"><button class="button button-outline" type="button" data-close-reset-default>Cancel</button><button class="button reset-confirm-button" type="button" data-action="confirm-reset-default"><i data-lucide="rotate-ccw"></i> Reset both hotels</button></div>
+			</div>
+		</dialog>
 		<dialog class="booking-dialog" id="booking-dialog" aria-labelledby="booking-title">
 			<form id="booking-form">
-				<div class="dialog-header"><div><span class="eyebrow">MORROW HOUSE</span><h2 id="booking-title">New reservation</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="Close dialog"><i data-lucide="x"></i></button></div>
+				<div class="dialog-header"><div><span class="eyebrow" id="booking-property-name">HOTEL</span><h2 id="booking-title">New reservation</h2></div><button class="icon-button" type="button" data-close-dialog aria-label="Close dialog"><i data-lucide="x"></i></button></div>
 				<div class="form-grid">
 					<label class="field field-wide">Guest name<input name="guest" required placeholder="e.g. Alex Morgan" autocomplete="name"></label>
-					<label class="field">Email address<input name="email" type="email" required placeholder="alex@example.com" autocomplete="email"></label>
-					<label class="field">Phone number<input name="phone" type="tel" placeholder="+1 (555) 000-0000" autocomplete="tel"></label>
 					<label class="field">Check-in<input name="checkin" type="date" required></label>
 					<label class="field">Check-out<input name="checkout" type="date" required></label>
 					<label class="field">Room<select name="room" required></select></label>
 					<label class="field">Guests<select name="guests"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
 					<label class="field field-wide">Special requests<textarea name="notes" rows="2" placeholder="Anything we should know?"></textarea></label>
 				</div>
-				<div class="dialog-footer"><span class="form-note"><i data-lucide="shield-check"></i> Guest details stay private</span><button class="button button-primary" type="submit"><i data-lucide="check"></i> Create reservation</button></div>
+				<div class="dialog-footer"><span class="form-note"><i data-lucide="shield-check"></i> Reservation details stay in this workspace</span><button class="button button-primary" type="submit"><i data-lucide="check"></i> Create reservation</button></div>
 			</form>
 		</dialog>
 		<dialog class="booking-dialog room-dialog" id="room-dialog" aria-labelledby="room-title">
@@ -78,8 +106,20 @@
 					<label class="field">Floor<select name="floor"><option>1st floor</option><option>2nd floor</option><option>3rd floor</option><option>4th floor</option><option>5th floor</option></select></label>
 					<label class="field">Nightly rate<input name="rate" type="number" min="1" step="1" required placeholder="189"></label>
 				</div>
-				<div class="dialog-footer"><span class="form-note"><i data-lucide="sparkles"></i> Ready for its first guest</span><button class="button button-primary" type="submit"><i data-lucide="plus"></i> Add room</button></div>
+				<div class="dialog-footer"><button class="button button-outline room-delete-button" type="button" data-action="delete-room" hidden><i data-lucide="trash-2"></i> Delete room</button><span class="form-note"><i data-lucide="sparkles"></i> Room setup</span><button class="button button-primary" type="submit"><i data-lucide="plus"></i> Add room</button></div>
+			</form>
+		</dialog>
+		<dialog class="booking-dialog room-dialog" id="employee-dialog" aria-labelledby="employee-title">
+			<form id="employee-form">
+				<div class="dialog-header"><div><span class="eyebrow">TEAM SETUP</span><h2 id="employee-title">Add employee</h2></div><button class="icon-button" type="button" data-close-employee-dialog aria-label="Close dialog"><i data-lucide="x"></i></button></div>
+				<div class="form-grid">
+					<label class="field field-wide">Employee name<input name="employee-name" required placeholder="e.g. Sam Carter"></label>
+					<label class="field field-wide">Role<select name="employee-role" required><option value="" selected disabled>Choose a role</option></select></label>
+					<label class="field field-wide">Annual salary<input name="employee-salary" type="number" min="0" step="100" required placeholder="Enter annual salary"></label>
+				</div>
+				<div class="dialog-footer"><span class="form-note"><i data-lucide="shield-check"></i> Team roster stays saved in this browser</span><button class="button button-primary" type="submit"><i data-lucide="plus"></i> Add employee</button></div>
 			</form>
 		</dialog>
 	</body>
 </html>
+
